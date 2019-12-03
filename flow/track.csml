@@ -1,0 +1,81 @@
+start:
+	say Text("Ecris le nom de l'oeuvre que tu veux écouter")
+	say Button("Ou retourne au menu")
+	hold
+
+	if (event match "Ou retourne au menu") goto flow mainMenu
+	else {
+		remember Fn("spotify", method = "search", q = event, type = "track", limit = 1) as foundTrack
+
+		if (foundTrack.tracks.items[0].external_urls.spotify) {
+			remember foundTrack.tracks.items[0] as foundTrack
+			say Image("https://media.tenor.co/images/76412b1afe8efecbed400dd31dfcc04c/tenor.gif")
+			say Audio("{{foundTrack.external_urls.spotify}}")
+			goto trackMenu
+		}
+		else say Text("Désolé mais je n'ai pas trouvé cette Track !")
+		goto start
+	}
+
+trackMenu:
+	use Fn("spotify", method="checkSavedTracksForUser", ids="{{foundTrack.id}}") as followStatus
+
+	if (followStatus[0] match false) use Button("Sauvegarder le morceau") as followBtn
+	else if (followStatus[0] match true) use Button("Enlever le morceau de la bibliothèque") as followBtn
+
+	use Button("Voir l'album") as getAlbum
+	use Button("Voir les paroles") as getLyrics
+	use Button("Trouver un autre morceau") as getAnotherSong
+
+	say getAlbum
+	say getLyrics
+	say followBtn
+	say getAnotherSong
+	hold
+
+	if (event match getAnotherSong) goto start
+	else if (event match getAlbum) goto getAlbum
+	else if (event match getLyrics) goto getLyrics
+	else if (event match "Sauvegarder le morceau") goto followTrack
+	else if (event match "Enlever le morceau de la bibliothèque") goto unfollowTrack
+
+getAlbum:
+	say Text("{{foundTrack.album.name}}")
+	say Audio("{{foundTrack.album.external_urls.spotify}}")
+
+	use Fn("spotify", method="checkSavedalbumsForUser", ids="{{foundTrack.album.id}}") as albumFollowStatus
+
+	if (albumFollowStatus[0] match false) say Button("Follow l'album")
+	else if (albumFollowStatus[0] match true) say Button("Unfollow l'album")
+	hold
+
+	if (event match "Follow l'album") {
+		use Fn("spotify", method="saveAlbumsForUser", ids="{{foundTrack.album.id}}")
+		say Text("C'est bon, tu retrouveras l'album {{foundTrack.album.name}} dans ta bibliothèque.")
+	}
+
+	if (event match "Unfollow l'album") {
+		use Fn("spotify", method="removeAlbumsForUser", ids="{{foundTrack.album.id}}")
+		say Text("C'est bon, {{foundTrack.album.name}} n'est plus dans ta bibliothèque.")
+	}
+
+	goto trackMenu
+
+followTrack:
+	use Fn("spotify", method="saveTracksForUser", ids="{{foundTrack.id}}")
+	say Text("C'est bon, {{foundTrack.name}} est dans ta bibliothèque !")
+	goto trackMenu
+
+unfollowTrack:
+	use Fn("spotify", method="removeTracksForUser", ids="{{foundTrack.id}}")
+	say Text("C'est bon, {{foundTrack.name}} n'est plus dans ta bibliothèque !")
+	goto trackMenu
+
+getLyrics:
+	use Fn("musixmatch", method="getLyrics", track="{{foundTrack.name}}", artist="{{foundTrack.artists[0].name}}") as foundTrackLyrics
+	say Text("{{foundTrackLyrics}}")
+	say Text("Oupsi, il semblerait que la clé d'api utilisé est une clé de pauvre.
+	Tu n'auras donc qu'un extrait des lyrics.
+	Mets des poces bleus pour que je puisse m'acheter à manger et que j'upgrade ma clé d'api !")
+	say Wait(5000)
+	goto start

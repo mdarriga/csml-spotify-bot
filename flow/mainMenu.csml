@@ -1,0 +1,33 @@
+start:
+	if (!spotifyUser) remember Fn("spotify", method="getCurrentUserProfile") as spotifyUser
+
+	if (!mainMenuShown) {
+		remember "shown" as mainMenuShown
+		remember "Qu'est-ce que je peux faire pour toi ?" as mainMenuTitle
+		say Typing(1000)
+		say Text("Salut {{spotifyUser.display_name}}, je suis David Guetto ton disc jockey personnel.")
+	}
+
+	use Button(title = "Trouver un artiste", accept = ["artiste", "chanteur", "musicien"]) as findArtist
+	use Button(title = "Ecouter un bon son", accept = ["son", "oeuvre", "morceau", "piste", "track"]) as findTrack
+	use Button("Ecouter une douce playlist", accept = ["playlist", "liste", "suite"]) as findPlaylist
+	use Button("Propose moi quelque chose") as randomSong
+
+	say Typing(1000)
+	say Question(
+		title = "{{mainMenuTitle}}",
+		buttons = [findArtist, findTrack, findPlaylist, randomSong]
+	)
+	hold
+
+	if (event match findArtist) goto flow artist
+	else if (event match findTrack) goto flow track
+	else if (event match findPlaylist) goto flow findPlaylist
+	else if (event match randomSong) goto flow randomSong
+	else {
+		say Typing(1000)
+		remember "Désolé mais à mon avis t'as pas cliqué sur un bouton, essaies encore." as mainMenuTitle
+		goto start
+	}
+
+	goto end

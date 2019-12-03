@@ -1,0 +1,18 @@
+{
+  "name": "csml-spotify",
+  "version": "1.0.0",
+  "description": "Api to handle playlist and songs via spotify",
+  "main": "index.js",
+  "scripts": {
+    "zip": "zip -r9 ../spotify.zip ."
+  },
+  "author": "Clevy",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/joi": "^16.1.7",
+    "axios": "^0.19.0",
+    "musixmatch-node": "^1.0.2",
+    "nodemailer": "^6.3.1",
+    "qs": "^6.9.1"
+  }
+}

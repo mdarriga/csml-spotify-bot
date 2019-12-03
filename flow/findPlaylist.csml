@@ -1,0 +1,61 @@
+start:
+ 	say Text("Voici les playlists que tu adores :")
+	use Fn("spotify", method = "getUserPlaylist") as userPlaylists
+
+	foreach(val, index) in userPlaylists.items {
+		say Text("{{val.name}}")
+		say Audio("{{val.external_urls.spotify}}")
+	}
+	goto searchPlaylist
+
+searchPlaylist:
+	use Button("Supprimer / Se désabonner d'une playlist") as deletePlaylist
+	say deletePlaylist
+	say Button("Faisons autre chose")
+	say Text("Ou alors tapes le nom d'une playlist que tu souhaites découvrir.")
+	hold
+
+	if (event match "Faisons autre chose") goto flow mainMenu
+	else if (event match deletePlaylist) goto deletePlaylist
+	else {
+		remember Fn("spotify", method = "search", q = event, type="playlist", limit = 1) as foundPlaylist
+
+		if (foundPlaylist[0].external_urls.spotify) {
+			say Image("https://media.tenor.co/images/76412b1afe8efecbed400dd31dfcc04c/tenor.gif")
+			say Audio("{{foundPlaylist[0].external_urls.spotify}}")
+
+			use Fn("spotify", method="checkUserFollowPlaylist", playlist_id="{{foundPlaylist[0].id}}", ids="{{spotifyUser.id}}") as followStatus
+
+			if (followStatus[0] match false) goto notFollowed
+			else if (followStatus[0] match true) goto followed
+		}
+		else say Text("Désolé mais je n'ai pas trouvé cette playlist !")
+
+		goto searchPlaylist
+	}
+
+notFollowed:
+	say Question(title = "Est-ce que tu souhaites t'abonner à la playlist ?", buttons = [
+		Button("Ok go"),
+		Button("Wallah non")
+	])
+	hold
+
+	if (event match "Ok go") {
+		use Fn("spotify", method="followPlaylist", playlist_id="{{foundPlaylist[0].id}}")
+		say Text("C'est bon, tu follow désormais la playlist {{foundPlaylist[0].name}}")
+	}
+	goto searchPlaylist
+
+followed:
+	say Question(title = "Est-ce que tu souhaites te désabonner de la playlist ?", buttons = [
+		Button("Ok go"),
+		Button("Wallah non")
+	])
+	hold
+
+	if (event match "Ok go") {
+		use Fn("spotify", method="unfollowPlaylist", playlist_id="{{foundPlaylist[0].id}}")
+		say Text("C'est bon, tu ne follow plus la playlist {{foundPlaylist[0].name}}")
+	}
+	goto searchPlaylist

@@ -1,0 +1,4 @@
+start:
+	say Audio("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC?si=NlmnZtMjQTCSfRzXrR-lQQ")
+	say Text("Get rickrolled !")
+	goto flow mainMenu

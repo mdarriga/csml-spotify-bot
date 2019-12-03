@@ -1,0 +1,64 @@
+start:
+	remember Fn("spotify", method = "getCurrentUserTopArtistAndTracks", type = "artists") as topArtists
+	remember "ko" as searchArtistFirstPass
+
+	say Text("Voici tes 3 artistes les plus écoutés en ce moment: ")
+	foreach(val) in topArtists {
+		say "{{val.name}}"
+		say Audio("{{val.external_urls.spotify}}")
+	}
+	goto searchArtist
+
+searchArtist:
+	remember [
+		"Encore un ?",
+		"Essaies-en un autre !",
+		"Un petit dernier ?"
+	] as shuffledSearchArtist
+	if (searchArtistFirstPass match "ok") {
+		remember Shuffle(shuffledSearchArtist) as searchArtistTitle
+	} else remember ["Tu peux aussi taper le nom d'un artiste et j'essaierai de te trouver ses meilleurs titres !"] as searchArtistTitle
+	remember "ok" as searchArtistFirstPass
+
+	say Text("{{searchArtistTitle[0]}}")
+	use Button("Faisons autre chose") as backToMenu
+	say backToMenu
+
+	hold
+
+	if (event match backToMenu) goto flow mainMenu
+
+	use Fn("spotify", method = "search", q = event, type = "artist", limit = 1) as foundArtist
+	if (foundArtist[0].external_urls.spotify) {
+		say Image("https://media.tenor.co/images/76412b1afe8efecbed400dd31dfcc04c/tenor.gif")
+		say Audio("{{foundArtist[0].external_urls.spotify}}")
+
+		use Fn("spotify", method="getFollowingStateForUsersOrArtists", type="artist", ids="{{foundArtist[0].id}}") as followStatus
+
+		if (followStatus[0] match false) goto notFollowed
+		else if (followStatus[0] match true) goto followed
+
+	} else say Text("Désolé mais je n'ai pas trouvé cet artiste !")
+	goto searchArtist
+
+notFollowed:
+	say "Je vois que tu n'es pas abonné à cet artiste !"
+	say Button("Suivre l'artiste")
+	say Button("Balec frère")
+	hold
+	if (event match "Suivre l'artiste") {
+		use Fn("spotify", method = "followUsersOrArtists", type = "artist", ids="{{foundArtist[0].id}}") as test
+		say Text("C'est bon, tu retrouveras {{foundArtist[0].name}} dans ta bibliothèque spotify !")
+	}
+	goto searchArtist
+
+followed:
+	say "Je vois que tu es abonné à cet artiste !"
+	say Button("Se désabonner")
+	say Button("Balec frère")
+	hold
+	if (event match "Se désabonner") {
+		use Fn("spotify", method = "unfollowUsersOrArtists", type = "artist", ids="{{foundArtist[0].id}}") as test
+		say Text("C'est bon, {{foundArtist[0].name}} a disparu de ta bibliothèque spotify !")
+	}
+	goto searchArtist

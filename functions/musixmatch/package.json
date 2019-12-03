@@ -1,0 +1,16 @@
+{
+  "name": "csml-musixmatch",
+  "version": "1.0.0",
+  "description": "Api to retrieve a song and / or lyrics",
+  "main": "index.js",
+  "scripts": {
+    "zip": "zip -r9 ../musixmatch.zip ."
+  },
+  "author": "Clevy",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/joi": "^16.1.7",
+    "musixmatch-node": "^1.0.2",
+    "nodemailer": "^6.3.1"
+  }
+}
